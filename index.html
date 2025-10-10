@@ -3,21 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Carrossel Estilo Netflix - Versão Aprimorada</title>
+    <title>Carrossel Estilo CiniFilme - Versão Aprimorada</title>
     <link rel="stylesheet" href="index.css">
 </head>
 <body>
 
 <div class="container">
-    <div class="header">
-        <h1 class="main-title">CineFlix</h1>
-        <p class="subtitle">Descubra os melhores filmes e séries</p>
-        <div class="settings-bar">
-            <button id="btn-open-settings" class="btn btn-secondary btn-settings" aria-haspopup="dialog" aria-controls="tmdb-settings-modal">
-                Configurar TMDB
-            </button>
+    <div class="site-header" role="banner" aria-label="Cabeçalho">
+        <a href="#" class="brand-logo" aria-label="CiniFilme - Página inicial">
+          <span class="brand-part brand-part-cini">Cini</span><span class="brand-part brand-part-filme">Filme</span>
+        </a>
+        <div class="header-actions">
+          <button class="btn btn-login" aria-label="Entrar">Entrar</button>
+          <button id="btn-open-settings" class="btn btn-secondary btn-settings" aria-haspopup="dialog" aria-controls="tmdb-settings-modal" aria-label="Configurar TMDB">
+            Configurar TMDB
+          </button>
         </div>
-    </div>
+      </div>
 
     <!-- Capa: Destaques (um por vez) -->
     <section class="hero has-capa" aria-label="Destaques">
@@ -396,7 +398,7 @@
         </div>
       </div>
       <h2 id="promo-title" class="promo-title">Descubra seus próximos favoritos e novidades todas as semanas</h2>
-      <a class="btn btn-secondary promo-more" href="https://about.netflix.com/" target="_blank" rel="noopener noreferrer">Mais sobre a Netflix</a>
+      <a class="btn btn-secondary promo-more" href="https://about.CiniFilme.com/" target="_blank" rel="noopener noreferrer">Mais sobre a CiniFilme</a>
     </div>
     <div class="promo-actions">
       <a class="btn btn-primary" href="#hero-cta" aria-label="Ir para o formulário de acesso">Acessar agora</a>

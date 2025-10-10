@@ -112,15 +112,15 @@
     nav.setAttribute('aria-label', 'Rodapé');
 
     const institutional = createSection('Institucional', [
-      { href: 'https://help.netflix.com/pt', label: 'Central de Ajuda' },
-      { href: 'https://help.netflix.com/legal/termsofuse', label: 'Termos de Uso' },
-      { href: 'https://help.netflix.com/legal/privacy', label: 'Privacidade' }
+      { href: 'https://help.CiniFilme.com/pt', label: 'Central de Ajuda' },
+      { href: 'https://help.CiniFilme.com/legal/termsofuse', label: 'Termos de Uso' },
+      { href: 'https://help.CiniFilme.com/legal/privacy', label: 'Privacidade' }
     ]);
 
     const about = createSection('Sobre', [
-      { href: 'https://help.netflix.com/legal/corpinfo', label: 'Informações corporativas' },
-      { href: 'https://help.netflix.com/legal/notices', label: 'Avisos legais' },
-      { href: 'https://help.netflix.com/legal', label: 'Centro de Ajuda Legal' }
+      { href: 'https://help.CiniFilme.com/legal/corpinfo', label: 'Informações corporativas' },
+      { href: 'https://help.CiniFilme.com/legal/notices', label: 'Avisos legais' },
+      { href: 'https://help.CiniFilme.com/legal', label: 'Centro de Ajuda Legal' }
     ]);
 
     nav.append(institutional, about);
@@ -131,16 +131,16 @@
     const social = document.createElement('div');
     social.className = 'footer-social';
     social.append(
-      createSocialLink('facebook', 'https://www.facebook.com/netflixbrasil', 'Netflix no Facebook'),
-      createSocialLink('instagram', 'https://www.instagram.com/netflixbrasil', 'Netflix no Instagram'),
-      createSocialLink('x', 'https://x.com/netflix', 'Netflix no X'),
-      createSocialLink('youtube', 'https://www.youtube.com/user/NetflixBR', 'Netflix no YouTube')
+      createSocialLink('facebook', 'https://www.facebook.com/CiniFilmebrasil', 'CiniFilme no Facebook'),
+      createSocialLink('instagram', 'https://www.instagram.com/CiniFilmebrasil', 'CiniFilme no Instagram'),
+      createSocialLink('x', 'https://x.com/CiniFilme', 'CiniFilme no X'),
+      createSocialLink('youtube', 'https://www.youtube.com/user/CiniFilmeBR', 'CiniFilme no YouTube')
     );
 
     const copy = document.createElement('div');
     copy.className = 'footer-copy';
     const year = new Date().getFullYear();
-    copy.textContent = `© ${year} Netflix Brasil`;
+    copy.textContent = `© ${year} CiniFilme Brasil`;
 
     const lang = createLanguageSelector();
 
