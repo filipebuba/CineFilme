@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="260" viewBox="0 0 960 260">
+  <rect x="0" y="0" width="960" height="260" fill="#141414" />
+  <rect x="24" y="40" width="120" height="180" rx="8" fill="#333" />
+  <rect x="164" y="40" width="120" height="180" rx="8" fill="#333" />
+  <rect x="304" y="40" width="120" height="180" rx="8" fill="#333" />
+  <rect x="444" y="40" width="120" height="180" rx="8" fill="#333" />
+  <rect x="584" y="40" width="120" height="180" rx="8" fill="#333" />
+  <rect x="724" y="40" width="120" height="180" rx="8" fill="#333" />
+  <text x="24" y="240" fill="#bbb" font-family="Arial, Helvetica, sans-serif" font-size="16">Carrossel Prévia (cards com aspecto 2:3 e hover leve)</text>
+</svg>

@@ -1,5 +1,8 @@
+// Carrossel básico: rolagem por scrollBy, autoplay e melhorias de acessibilidade.
+// Observação: este módulo é independente dos carrosséis avançados em index.js.
 let autoplayInterval;
 
+// Rolagem incremental do carrossel usando comportamento suave
 function scrollCarousel(id, direction) {
     const carousel = document.getElementById(id);
     const scrollAmount = 600; 
@@ -9,6 +12,7 @@ function scrollCarousel(id, direction) {
     });
 }
 
+// Autoplay simples: a cada 5s avança; se no final, volta ao início
 function startAutoplay(id) {
     const carousel = document.getElementById(id);
     const scrollAmount = 600;
@@ -22,15 +26,18 @@ function startAutoplay(id) {
     }, 5000);
 }
 
+// Pausa o autoplay atual
 function stopAutoplay() {
     clearInterval(autoplayInterval);
 }
 
+// Ação de clique em card (exemplo simples)
 function handleCardClick(btn) {
     // Exemplo de ação ao clicar no card
     alert(btn.getAttribute('aria-label'));
 }
 
+// Bootstrap: inicia autoplay e adiciona handlers de foco/hover
 document.addEventListener('DOMContentLoaded', () => {
     startAutoplay('carousel1');
 
@@ -40,7 +47,7 @@ document.addEventListener('DOMContentLoaded', () => {
     carousel.addEventListener('focusin', stopAutoplay);
     carousel.addEventListener('focusout', () => startAutoplay('carousel1'));
 
-    // Acessibilidade dos botões
+    // Acessibilidade dos botões: rótulos ARIA e destaque visual no foco
     document.querySelector('.nav-button.left').setAttribute('aria-label', 'Anterior');
     document.querySelector('.nav-button.right').setAttribute('aria-label', 'Próximo');
     document.querySelectorAll('.nav-button').forEach(btn => {

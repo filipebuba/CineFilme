@@ -1,3 +1,5 @@
+// Monta dinamicamente o rodapé com navegação, social e seletor de idioma.
+// Foco em acessibilidade: títulos SR-only, ARIA labels e aria-live.
 (() => {
   const createLink = (href, label) => {
     const a = document.createElement('a');
@@ -13,7 +15,7 @@
     const section = document.createElement('section');
     section.className = 'footer-section';
     const h = document.createElement('h3');
-    h.className = 'footer-section-title sr-only';
+    h.className = 'footer-section-title sr-only'; // visível para leitores de tela
     h.textContent = title;
     const ul = document.createElement('ul');
     ul.className = 'footer-list';
@@ -60,7 +62,7 @@
     a.className = 'footer-social-link';
     a.target = '_blank';
     a.rel = 'noopener noreferrer';
-    a.setAttribute('aria-label', label);
+    a.setAttribute('aria-label', label); // descrever destino do link para ARIA
     a.appendChild(socialIcon(name));
     return a;
   };
@@ -87,7 +89,7 @@
       select.appendChild(opt);
     });
     const announcer = document.createElement('div');
-    announcer.setAttribute('aria-live', 'polite');
+    announcer.setAttribute('aria-live', 'polite'); // anuncia mudanças de idioma (SR-only)
     announcer.className = 'sr-only';
     select.addEventListener('change', () => {
       const val = select.value;
@@ -109,7 +111,7 @@
 
     const nav = document.createElement('nav');
     nav.className = 'footer-grid';
-    nav.setAttribute('aria-label', 'Rodapé');
+    nav.setAttribute('aria-label', 'Rodapé'); // região navegável do rodapé
 
     const institutional = createSection('Institucional', [
       { href: 'https://help.CiniFilme.com/pt', label: 'Central de Ajuda' },
@@ -151,12 +153,12 @@
   };
 
   const mount = () => {
-    const el = buildFooter();
+    const el = buildFooter(); // monta estrutura completa do rodapé
     const existing = document.getElementById('app-footer');
     if (existing) {
-      existing.replaceWith(el);
+      existing.replaceWith(el); // substitui se existir placeholder
     } else {
-      document.body.appendChild(el);
+      document.body.appendChild(el); // anexa ao body
     }
   };
 

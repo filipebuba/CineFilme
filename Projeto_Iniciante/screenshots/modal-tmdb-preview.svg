@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="600" height="380" viewBox="0 0 600 380">
+  <rect x="0" y="0" width="600" height="380" fill="#111" />
+  <rect x="70" y="40" width="460" height="300" rx="12" fill="#1e1e1e" stroke="#444" stroke-width="2" />
+  <text x="100" y="90" fill="#fff" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="700">Configurar TMDB</text>
+  <text x="100" y="130" fill="#ccc" font-family="Arial, Helvetica, sans-serif" font-size="14">Informe sua API Key v3 para carregar dados reais.</text>
+  <rect x="100" y="150" width="400" height="36" rx="6" fill="#2b2b2b" />
+  <text x="110" y="174" fill="#999" font-family="Arial, Helvetica, sans-serif" font-size="14">api_key_aqui...</text>
+  <rect x="100" y="210" width="140" height="40" rx="8" fill="#e50914" />
+  <text x="125" y="236" fill="#fff" font-family="Arial, Helvetica, sans-serif" font-size="16" font-weight="700">Salvar</text>
+  <rect x="250" y="210" width="140" height="40" rx="8" fill="#2b2b2b" />
+  <text x="280" y="236" fill="#fff" font-family="Arial, Helvetica, sans-serif" font-size="16" font-weight="700">Cancelar</text>
+  <text x="70" y="360" fill="#bbb" font-family="Arial, Helvetica, sans-serif" font-size="16">Modal TMDB Prévia (entrada de chave e ações)</text>
+</svg>

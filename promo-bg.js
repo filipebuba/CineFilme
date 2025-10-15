@@ -1,4 +1,6 @@
 // Popula dinamicamente o background da seção promocional com imagens
+// Estratégia: coletar fontes (hero + carrosséis), deduplicar, limitar,
+// renderizar faixa e duplicar sequência para criar loop contínuo animado.
 (function () {
   function collectImageSources() {
     // Preservar ordem e preferir backdrops
@@ -28,6 +30,7 @@
     if (!banner) return null;
     let bg = banner.querySelector('.promo-bg');
     if (!bg) {
+      // Cria contêiner de background caso não exista
       bg = document.createElement('div');
       bg.className = 'promo-bg';
       const strip = document.createElement('div');
@@ -40,6 +43,7 @@
   }
 
   function populate() {
+    // Reconstroi a faixa com imagens atuais coletadas
     const strip = ensurePromoStrip();
     if (!strip) return;
     strip.innerHTML = '';
@@ -58,11 +62,12 @@
     };
 
     chosen.forEach(appendImg);
-    // Duplicar sequência para loop contínuo
+    // Duplicar sequência para loop contínuo (ver keyframes em index.css)
     chosen.forEach(appendImg);
   }
 
   function setupObservers() {
+    // Observa mudanças nos nós de hero/carrosséis para atualizar faixa
     const targets = [
       document.getElementById('hero-slider'),
       ...Array.from(document.querySelectorAll('.carousel'))
@@ -75,6 +80,7 @@
   }
 
   function init() {
+    // Inicializa, adiciona observers e reinvoca ao carregar imagens
     populate();
     setupObservers();
     window.addEventListener('load', populate);

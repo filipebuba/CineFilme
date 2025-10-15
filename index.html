@@ -1,14 +1,19 @@
 <!DOCTYPE html>
+<!-- Página principal: estrutura semântica, carrosséis e integração TMDB. -->
 <html lang="pt-br">
 <head>
+    <!-- Metadados e responsividade -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Carrossel Estilo CiniFilme - Versão Aprimorada</title>
+    <!-- Estilos principais da página -->
     <link rel="stylesheet" href="index.css">
 </head>
 <body>
 
+<!-- Container principal: cabeçalho, capa e carrosséis -->
 <div class="container">
+    <!-- Cabeçalho com logotipo e ações (login/configurações) -->
     <div class="site-header" role="banner" aria-label="Cabeçalho">
         <a href="#" class="brand-logo" aria-label="CiniFilme - Página inicial">
           <span class="brand-part brand-part-cini">Cini</span><span class="brand-part brand-part-filme">Filme</span>
@@ -21,14 +26,15 @@
         </div>
       </div>
 
-    <!-- Capa: Destaques (um por vez) -->
+    <!-- Capa/Hero com slider, navegação e CTA -->
     <section class="hero has-capa" aria-label="Destaques">
-        <!-- Pill superior central -->
+        <!-- Atalhos no topo da capa -->
         <nav class="hero-top-pill" aria-label="Atalhos da capa">
             <a href="#mais-titulos" class="pill-link">Mais títulos para assistir</a>
             <span class="pill-sep" aria-hidden="true"></span>
             <a href="#planos" class="pill-link">Planos</a>
         </nav>
+        <!-- Faixa de slides do hero; um ativo por vez -->
         <div class="hero-slider" id="hero-slider">
             <div class="hero-slide is-active" data-index="0">
                 <img class="hero-image" src="https://image.tmdb.org/t/p/original/4GQfEI0n0V2lxh9H9n1tFoZT3zh.jpg" alt="Destaque: Oppenheimer" loading="lazy" />
@@ -91,13 +97,16 @@
                 </div>
             </div>
         </div>
+        <!-- Controles laterais do hero (prev/next) -->
         <div class="hero-nav" aria-hidden="false">
             <button class="nav-button left" aria-label="Slide anterior" data-hero-action="prev">&#10094;</button>
             <button class="nav-button right" aria-label="Próximo slide" data-hero-action="next">&#10095;</button>
         </div>
+        <!-- Dots acessíveis para navegação por slide -->
         <div class="hero-dots" id="hero-dots" aria-label="Navegação de slides"></div>
+        <!-- Barra de progresso do auto-play -->
         <div class="hero-progress" aria-hidden="true"><div class="fill" id="hero-progress-fill"></div></div>
-        <!-- Formulário de chamada como na referência -->
+        <!-- CTA: formulário simples para captura de email -->
 <div id="hero-cta" class="hero-cta" role="form" aria-label="Assinar agora">
             <div class="cta-row">
                 <input type="email" class="hero-input" placeholder="Email" aria-label="Email" />
@@ -105,13 +114,16 @@
             </div>
             <div class="hero-price-note">Diversão ilimitada a partir de R$ 20,90</div>
         </div>
-        <!-- Curva inferior da capa -->
+        <!-- Curva decorativa inferior da capa -->
         <div class="hero-curve" aria-hidden="true"></div>
     </section>
 
+    <!-- Seção de conteúdo: Filmes Populares -->
     <div class="section">
         <h2 class="section-title">Filmes Populares</h2>
+        <!-- Wrapper do carrossel, controlado via JS por data-attributes -->
         <div class="carousel-wrapper" data-carousel="popular">
+            <!-- Trilho do carrossel; os cards rolam horizontalmente -->
             <div class="carousel" id="carousel-popular">
                 <button class="movie-card" type="button" aria-label="Filme: Vingadores Ultimato" data-carousel-id="carousel-popular">
                     <img class="movie-image" src="https://image.tmdb.org/t/p/w500/or06FN3Dka5tukK1e9sl16pB3iy.jpg" alt="Vingadores: Ultimato" loading="lazy">
@@ -234,6 +246,7 @@
                 </button>
             </div>
             
+        <!-- Botões de navegação do carrossel -->
         <button class="nav-button left" 
             data-action="nav-left" data-target="carousel-popular"
             aria-label="Navegar para filmes anteriores" aria-controls="carousel-popular"
@@ -248,15 +261,19 @@
                 &#10095;
             </button>
             
+            <!-- Barra de progresso da posição do carrossel -->
             <div class="progress-bar">
                 <div class="progress-fill" id="progress-popular"></div>
             </div>
         </div>
     </div>
 
+    <!-- Seção de conteúdo: Séries em Alta -->
     <div class="section">
         <h2 class="section-title">Séries em Alta</h2>
+        <!-- Wrapper do carrossel de séries -->
         <div class="carousel-wrapper" data-carousel="series">
+            <!-- Trilho do carrossel de séries -->
             <div class="carousel" id="carousel-series">
                 <button class="movie-card" type="button" aria-label="Série: Stranger Things" data-carousel-id="carousel-series">
                     <img class="movie-image" src="https://image.tmdb.org/t/p/w500/49WJfeN0moxb9IPfGn8AIqMGskD.jpg" alt="Stranger Things" loading="lazy">
@@ -355,6 +372,7 @@
                 </button>
             </div>
             
+        <!-- Botões de navegação do carrossel -->
         <button class="nav-button left" 
             data-action="nav-left" data-target="carousel-series"
             aria-label="Navegar para séries anteriores" aria-controls="carousel-series"
@@ -369,6 +387,7 @@
                 &#10095;
             </button>
             
+            <!-- Barra de progresso de séries -->
             <div class="progress-bar">
                 <div class="progress-fill" id="progress-series"></div>
             </div>
@@ -409,13 +428,16 @@
 </div>
 
 <!-- Modal de Configuração TMDB -->
+<!-- Modal inicia oculto; exibido/ocultado via JavaScript -->
 <div class="modal-overlay" id="tmdb-settings-modal" role="dialog" aria-modal="true" aria-labelledby="tmdb-modal-title" hidden>
     <div class="modal-content" role="document">
         <h3 id="tmdb-modal-title">Configurar API do TMDB</h3>
         <p class="modal-text">Insira sua chave da API do <a href="https://www.themoviedb.org/" target="_blank" rel="noopener">TMDB</a> para carregar catálogos reais. A chave será salva apenas no seu navegador (localStorage).</p>
         <label for="tmdb-key-input" class="modal-label">API Key</label>
+        <!-- Persistida em localStorage; também pode ser lida de ?tmdb_api_key -->
         <input id="tmdb-key-input" class="modal-input" type="text" inputmode="text" autocomplete="off" placeholder="Cole sua API key aqui" aria-describedby="tmdb-help" />
         <small id="tmdb-help" class="modal-hint">Dica: você também pode usar ?tmdb_api_key=SUACHAVE na URL.</small>
+        <!-- Ações do modal -->
         <div class="modal-actions">
             <button class="btn btn-primary" id="tmdb-save">Salvar</button>
             <button class="btn" id="tmdb-clear">Remover</button>
@@ -426,6 +448,7 @@
     <div class="modal-backdrop" aria-hidden="true"></div>
 </div>
 
+<!-- Scripts: dados estáticos, interatividade principal, fundo promocional e footer -->
 <script src="data.js" defer></script>
 <script src="index.js" defer></script>
 <script src="promo-bg.js" defer></script>

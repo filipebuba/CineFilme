@@ -1,16 +1,53 @@
+// ------------------------------------------------------------------
+// Arquivo principal do app CiniFilme
+// - Orquestra HeroSlider (capa) e MovieCarousel (seções)
+// - Carrega dados do TMDB ou usa fallback local (window.APP_DATA)
+// - Liga modal para configurar a API key do TMDB
+// - Realiza delegação de eventos para navegação e seleção
+// ------------------------------------------------------------------
 // ==========================
 // Integração opcional com TMDB
 // ==========================
+// Bases de URL para imagens do TMDB.
+// `posterBase` é usado para pôsteres (cards) e `backdropBase` para imagens grandes (hero).
 const TMDB_IMG = {
   posterBase: 'https://image.tmdb.org/t/p/w500',
   backdropBase: 'https://image.tmdb.org/t/p/original'
 };
 
+// ==========================
+// Constantes de UI (evitam números mágicos espalhados)
+// ==========================
+const UI_CONST = {
+  CARD_MARGIN_EXTRA: 15,
+  CAROUSEL_PADDING_COMPENSATION: 120,
+  SCROLL_PAGE_SIZE_CARDS: 2,
+  TOUCH_SWIPE_THRESHOLD_PX: 50,
+  AUTOPLAY_INTERVAL_MS: 5000,
+  HIDE_OFFSCREEN_LEFT_PX: -10000,
+  CARD_SELECT_SCALE: 0.95,
+  ANNOUNCE_TIMEOUT_MS: 1000,
+  RESIZE_DEBOUNCE_MS: 250,
+  SELECT_ANIMATION_MS: 150,
+};
+
+/**
+ * Lê o valor de um parâmetro da URL atual.
+ * Ex.: getQueryParam('tmdb_api_key') -> 'chave'
+ * @param {string} name Nome do parâmetro
+ * @returns {string|null} Valor do parâmetro ou null
+ */
 function getQueryParam(name) {
   const url = new URL(window.location.href);
   return url.searchParams.get(name);
 }
 
+/**
+ * Obtém a API key do TMDB com prioridade para o query string.
+ * - Se existir `?tmdb_api_key=...`, salva em localStorage e usa.
+ * - Caso contrário, tenta ler de localStorage.
+ * @returns {string} API key ou string vazia
+ */
 function getTmdbApiKey() {
   const qp = getQueryParam('tmdb_api_key');
   if (qp) {
@@ -20,6 +57,13 @@ function getTmdbApiKey() {
   try { return localStorage.getItem('tmdb_api_key') || ''; } catch (_) { return ''; }
 }
 
+/**
+ * Chama a API do TMDB (v3) com idioma `pt-BR` e parâmetros adicionais.
+ * Lança erro se a resposta não for OK, retornando o JSON do endpoint.
+ * @param {string} path Caminho do endpoint TMDB (ex.: 'movie/popular')
+ * @param {Record<string, string|number|boolean>} params Parâmetros adicionais
+ * @returns {Promise<any>} Resposta JSON do TMDB
+ */
 async function fetchTMDB(path, params = {}) {
   const apiKey = getTmdbApiKey();
   if (!apiKey) throw new Error('TMDB API key ausente');
@@ -32,6 +76,12 @@ async function fetchTMDB(path, params = {}) {
   return res.json();
 }
 
+/**
+ * Normaliza um item retornado pelo TMDB para o formato usado pelo app.
+ * Extrai título, ano, nota, pôster, backdrop e overview.
+ * @param {any} item Objeto de mídia do TMDB
+ * @returns {{title:string, year:string, rating:string, poster:string, backdrop:string, overview:string}} Objeto de mídia normalizado
+ */
 function mapMedia(item) {
   const title = item.title || item.name || 'Título';
   const date = item.release_date || item.first_air_date || '';
@@ -47,6 +97,10 @@ function mapMedia(item) {
   };
 }
 
+/**
+ * Insere crédito ao TMDB uma única vez no container principal.
+ * @returns {void}
+ */
 function ensureTmdbAttribution() {
   const container = document.querySelector('.container');
   if (!container) return;
@@ -58,6 +112,13 @@ function ensureTmdbAttribution() {
   }
 }
 
+/**
+ * Cria o elemento de card de filme/série para o carrossel.
+ * Inclui imagem, título, ano e nota, com atributos de acessibilidade.
+ * @param {{title:string, year:string, rating:string, poster:string, backdrop:string}} item Mídia normalizada
+ * @param {string} carouselId ID do carrossel no qual o card será inserido
+ * @returns {HTMLButtonElement} Elemento de botão representando o card
+ */
 function buildCard(item, carouselId) {
   const btn = document.createElement('button');
   btn.className = 'movie-card';
@@ -75,6 +136,11 @@ function buildCard(item, carouselId) {
   return btn;
 }
 
+/**
+ * Popula a interface com dados reais do TMDB (hero e carrosséis).
+ * Retorna `true` em caso de sucesso; `false` se falhar (para permitir fallback local).
+ * @returns {Promise<boolean>} Se houve carregamento via TMDB
+ */
 async function populateFromTMDB() {
   const apiKey = getTmdbApiKey();
   if (!apiKey) return false;
@@ -134,6 +200,7 @@ async function populateFromTMDB() {
     const container = document.querySelector('.container');
     if (container) {
       const appendSection = (id, title, list) => {
+        // Renderiza uma nova seção com carrossel, botões de navegação e barra de progresso
         const sectionEl = document.createElement('div');
         sectionEl.className = 'section';
         sectionEl.innerHTML = `
@@ -160,6 +227,15 @@ async function populateFromTMDB() {
   }
 }
 
+// ==========================
+// Componente: Carrossel de Filmes
+// Responsável por navegação, progresso, acessibilidade, touch e autoplay.
+// ==========================
+/**
+ * @class MovieCarousel
+ * Gerencia múltiplos carrosséis de mídia: navegação, progresso, teclado,
+ * gestos de toque, autoplay e recalculagem responsiva.
+ */
 class MovieCarousel {
   constructor() {
     this.carousels = new Map();
@@ -180,6 +256,7 @@ class MovieCarousel {
         element: carousel,
         wrapper,
         cards,
+        // Largura efetiva de um card (inclui margem e espaçamento extra)
         cardWidth: this.getCardWidth(cards[0]),
         maxScroll: this.calculateMaxScroll(carousel, cards),
         currentIndex: 0
@@ -193,24 +270,42 @@ class MovieCarousel {
     });
     console.log('Carrosséis inicializados:', this.carousels.size);
   }
+  /**
+   * Calcula largura efetiva de um card somando largura + margem + espaçamento.
+   * @param {HTMLElement} card Elemento do card
+   * @returns {number} Largura efetiva em pixels
+   */
   getCardWidth(card) {
     if (!card) return 280;
     const style = getComputedStyle(card);
     const width = parseInt(style.width);
     const marginRight = parseInt(style.marginRight) || 0;
-    return width + marginRight + 15;
+    return width + marginRight + UI_CONST.CARD_MARGIN_EXTRA;
   }
+  /**
+   * Determina o deslocamento máximo possível considerando o total de cards e largura do container.
+   * @param {HTMLElement} carousel Elemento do carrossel
+   * @param {NodeListOf<HTMLElement>|HTMLElement[]} cards Lista de cards
+   * @returns {number} Máximo deslocamento em pixels
+   */
   calculateMaxScroll(carousel, cards) {
     const containerWidth = carousel.parentElement.offsetWidth;
     const totalWidth = cards.length * this.getCardWidth(cards[0]);
-    return Math.max(0, totalWidth - containerWidth + 120);
+    // Compensa padding/margens do wrapper para evitar corte visual
+    return Math.max(0, totalWidth - containerWidth + UI_CONST.CAROUSEL_PADDING_COMPENSATION);
   }
+  /**
+   * Move o carrossel para esquerda/direita em "páginas" de 2 cards; atualiza UI.
+   * @param {string} carouselId ID do carrossel
+   * @param {number} direction 1 para direita, -1 para esquerda
+   * @returns {void}
+   */
   navigate(carouselId, direction) {
     const carouselData = this.carousels.get(carouselId);
     if (!carouselData) return;
     const { element, cardWidth } = carouselData;
     const currentPos = this.currentPositions.get(carouselId);
-    const scrollAmount = cardWidth * 2;
+    const scrollAmount = cardWidth * UI_CONST.SCROLL_PAGE_SIZE_CARDS;
     let newPosition;
     if (direction > 0) newPosition = Math.min(currentPos + scrollAmount, carouselData.maxScroll);
     else newPosition = Math.max(currentPos - scrollAmount, 0);
@@ -222,15 +317,26 @@ class MovieCarousel {
     carouselData.currentIndex = newIndex;
     this.announceNavigation(direction);
   }
+  /**
+   * Atualiza a barra de progresso do carrossel com base no deslocamento.
+    * @param {string} carouselId ID do carrossel
+    * @returns {void}
+   */
   updateProgress(carouselId) {
     const carouselData = this.carousels.get(carouselId);
     const currentPos = this.currentPositions.get(carouselId);
     const progressBar = document.getElementById(`progress-${carouselId.split('-')[1]}`);
+    // ID do progresso usa sufixo após 'carousel-': ex. 'carousel-popular' -> 'progress-popular'
     if (progressBar && carouselData.maxScroll > 0) {
       const progress = (currentPos / carouselData.maxScroll) * 100;
       progressBar.style.width = `${Math.min(progress, 100)}%`;
     }
   }
+  /**
+   * Habilita/desabilita botões de navegação conforme início/fim do carrossel.
+    * @param {string} carouselId ID do carrossel
+    * @returns {void}
+   */
   updateButtonStates(carouselId) {
     const wrapper = this.carousels.get(carouselId).wrapper;
     const leftBtn = wrapper.querySelector('.nav-button.left');
@@ -240,6 +346,11 @@ class MovieCarousel {
     leftBtn.disabled = currentPos <= 0;
     rightBtn.disabled = currentPos >= maxScroll;
   }
+  /**
+   * Navegação via teclado em cada card (setas e Enter/Espaço).
+    * @param {string} carouselId ID do carrossel
+    * @returns {void}
+   */
   addKeyboardNavigation(carouselId) {
     const carouselData = this.carousels.get(carouselId);
     carouselData.cards.forEach(card => {
@@ -253,6 +364,11 @@ class MovieCarousel {
       });
     });
   }
+  /**
+   * Suporte a gesto de arrastar no touch para navegar entre itens.
+    * @param {string} carouselId ID do carrossel
+    * @returns {void}
+   */
   addTouchSupport(carouselId) {
     const carousel = this.carousels.get(carouselId).element;
     let startX = 0, startY = 0, isDragging = false;
@@ -265,38 +381,59 @@ class MovieCarousel {
     }, { passive: false });
     carousel.addEventListener('touchend', e => {
       if (!isDragging) return;
-      const endX = e.changedTouches[0].clientX; const diffX = startX - endX; const threshold = 50;
+      const endX = e.changedTouches[0].clientX; const diffX = startX - endX; const threshold = UI_CONST.TOUCH_SWIPE_THRESHOLD_PX;
       if (Math.abs(diffX) > threshold) this.navigate(carouselId, diffX > 0 ? 1 : -1);
       isDragging = false;
     }, { passive: true });
   }
+  /**
+   * Efeito de seleção do card e anúncio acessível via `aria-live`.
+    * @param {HTMLElement} card Card selecionado
+    * @returns {void}
+   */
   selectMovie(card) {
     const title = card.querySelector('.movie-title')?.textContent || 'Filme selecionado';
-    card.style.transform = 'scale(0.95)';
-    setTimeout(() => { card.style.transform = ''; }, 150);
+    card.style.transform = `scale(${UI_CONST.CARD_SELECT_SCALE})`;
+    setTimeout(() => { card.style.transform = ''; }, UI_CONST.SELECT_ANIMATION_MS);
     console.log(`Filme selecionado: ${title}`);
     const announcement = document.createElement('div');
     announcement.setAttribute('aria-live', 'polite');
     announcement.setAttribute('aria-atomic', 'true');
     announcement.style.position = 'absolute';
-    announcement.style.left = '-10000px';
+    announcement.style.left = `${UI_CONST.HIDE_OFFSCREEN_LEFT_PX}px`;
     announcement.textContent = `${title} selecionado`;
     document.body.appendChild(announcement);
-    setTimeout(() => { document.body.removeChild(announcement); }, 1000);
+    setTimeout(() => { document.body.removeChild(announcement); }, UI_CONST.ANNOUNCE_TIMEOUT_MS);
   }
+  /**
+   * Anuncia a direção de navegação para leitores de tela.
+    * @param {number} direction 1 para direita, -1 para esquerda
+    * @returns {void}
+   */
   announceNavigation(direction) {
     const announcement = document.createElement('div');
     announcement.setAttribute('aria-live', 'polite');
-    announcement.style.position = 'absolute'; announcement.style.left = '-10000px';
+    announcement.style.position = 'absolute'; announcement.style.left = `${UI_CONST.HIDE_OFFSCREEN_LEFT_PX}px`;
     const directionText = direction > 0 ? 'próximos' : 'anteriores';
     announcement.textContent = `Navegando para ${directionText} itens`;
     document.body.appendChild(announcement);
-    setTimeout(() => { document.body.removeChild(announcement); }, 1000);
+    setTimeout(() => { document.body.removeChild(announcement); }, UI_CONST.ANNOUNCE_TIMEOUT_MS);
   }
-  startAutoPlay(intervalMs = 5000) {
+  /**
+   * Inicia autoplay para todos os carrosséis.
+    * @param {number} [intervalMs] Intervalo em ms
+    * @returns {void}
+   */
+  startAutoPlay(intervalMs = UI_CONST.AUTOPLAY_INTERVAL_MS) {
     this.carousels.forEach((_, carouselId) => this.startAutoplayFor(carouselId, intervalMs));
   }
-  startAutoplayFor(carouselId, intervalMs = 5000) {
+  /**
+   * Controla o autoplay de um carrossel específico. Pausa em hover/focus/aba oculta.
+    * @param {string} carouselId ID do carrossel
+    * @param {number} [intervalMs] Intervalo em ms
+    * @returns {void}
+   */
+  startAutoplayFor(carouselId, intervalMs = UI_CONST.AUTOPLAY_INTERVAL_MS) {
     this.stopAutoplayFor(carouselId);
     const tick = () => {
       const data = this.carousels.get(carouselId);
@@ -322,26 +459,40 @@ class MovieCarousel {
     };
     this.autoplayTimers.set(carouselId, setTimeout(tick, intervalMs));
   }
+  /**
+   * Interrompe o autoplay de um carrossel.
+    * @param {string} carouselId ID do carrossel
+    * @returns {void}
+   */
   stopAutoplayFor(carouselId) {
     const t = this.autoplayTimers.get(carouselId);
     if (t) clearTimeout(t);
     this.autoplayTimers.delete(carouselId);
   }
+  /**
+   * Liga handlers de pausa/retomada (hover, focus, visibilidade) e inicia autoplay.
+    * @param {string} carouselId ID do carrossel
+    * @returns {void}
+   */
   attachAutoplayHandlers(carouselId) {
     const data = this.carousels.get(carouselId);
     if (!data) return;
     const wrapper = data.wrapper;
-    const restart = () => this.startAutoplayFor(carouselId, 5000);
+    const restart = () => this.startAutoplayFor(carouselId, UI_CONST.AUTOPLAY_INTERVAL_MS);
     const pause = () => this.stopAutoplayFor(carouselId);
     wrapper.addEventListener('mouseenter', pause);
     wrapper.addEventListener('mouseleave', restart);
     wrapper.addEventListener('focusin', pause);
     wrapper.addEventListener('focusout', restart);
     document.addEventListener('visibilitychange', () => {
-      if (document.hidden) this.stopAutoplayFor(carouselId); else this.startAutoplayFor(carouselId, 5000);
+      if (document.hidden) this.stopAutoplayFor(carouselId); else this.startAutoplayFor(carouselId, UI_CONST.AUTOPLAY_INTERVAL_MS);
     });
-    this.startAutoplayFor(carouselId, 5000);
+    this.startAutoplayFor(carouselId, UI_CONST.AUTOPLAY_INTERVAL_MS);
   }
+  /**
+   * Recalcula dimensões e limites após resize.
+    * @returns {void}
+   */
   recalculate() {
     this.carousels.forEach((data, carouselId) => {
       data.cardWidth = this.getCardWidth(data.cards[0]);
@@ -352,8 +503,21 @@ class MovieCarousel {
   }
 }
 
+// ==========================
+// Componente: Hero Slider
+// Slider do topo com dots, barra de progresso, teclado e touch.
+// ==========================
+/**
+ * @class HeroSlider
+ * Gerencia o slider de destaque (hero), incluindo dots, barra de progresso,
+ * teclado, suporte a toque e avanço automático.
+ */
 class HeroSlider {
-  constructor(selector, { interval = 5000 } = {}) {
+  /**
+   * @param {string} selector Seletor para o container do slider
+   * @param {{ interval?: number }} [options] Opções do slider
+   */
+  constructor(selector, { interval = UI_CONST.AUTOPLAY_INTERVAL_MS } = {}) {
     this.container = document.querySelector(selector);
     if (!this.container) {
       console.error('HeroSlider: Container não encontrado:', selector);
@@ -374,6 +538,10 @@ class HeroSlider {
     this.isPaused = false;
     this.init();
   }
+  /**
+   * Configura dots, estado inicial, timers, eventos de hover/visibilidade/teclado e touch.
+   * @returns {void}
+   */
   init() {
     this.buildDots();
     this.update();
@@ -400,12 +568,16 @@ class HeroSlider {
     hero.addEventListener('touchend', e => {
       if (!dragging) return;
       const dx = startX - e.changedTouches[0].clientX;
-      if (Math.abs(dx) > 50) {
+      if (Math.abs(dx) > UI_CONST.TOUCH_SWIPE_THRESHOLD_PX) {
         if (dx > 0) this.next(); else this.prev();
       }
       dragging = false;
     }, { passive: true });
   }
+  /**
+   * Constrói os dots clicáveis correspondentes aos slides do hero.
+   * @returns {void}
+   */
   buildDots() {
     this.dotsContainer.innerHTML = '';
     this.slides.forEach((_, i) => {
@@ -415,11 +587,20 @@ class HeroSlider {
       this.dotsContainer.appendChild(dot);
     });
   }
+  /**
+   * Atualiza slide ativo e estado visual dos dots; reinicia a barra de progresso.
+   * @returns {void}
+   */
   update() {
     this.slides.forEach((s, i) => s.classList.toggle('is-active', i === this.current));
     Array.from(this.dotsContainer.children).forEach((d, i) => d.classList.toggle('is-active', i === this.current));
     this.resetProgress();
   }
+  /**
+   * Reinicia a animação da barra de progresso usando transições CSS.
+   * O duplo requestAnimationFrame garante aplicação de estilos imediatamente.
+   * @returns {void}
+   */
   resetProgress() {
     if (!this.progressFill) return;
     this.progressFill.style.transition = 'none';
@@ -431,11 +612,19 @@ class HeroSlider {
       });
     });
   }
+  /**
+   * Inicia o timer de avanço automático e reseta a barra de progresso.
+   * @returns {void}
+   */
   start() {
     this.stop();
     this.timer = setInterval(() => this.next(), this.interval);
     this.resetProgress();
   }
+  /**
+   * Para o avanço automático e congela transições da barra.
+   * @returns {void}
+   */
   stop() {
     if (this.timer) {
       clearInterval(this.timer);
@@ -445,23 +634,39 @@ class HeroSlider {
       this.progressFill.style.transition = 'none';
     }
   }
+  /**
+   * Vai para o índice informado, ciclando entre os slides disponíveis.
+   * @param {number} i Índice alvo
+   * @returns {void}
+   */
   goTo(i) { this.current = (i + this.slides.length) % this.slides.length; this.update(); }
+  /** Avança para o próximo slide. */
   next() { this.goTo(this.current + 1); }
+  /** Volta para o slide anterior. */
   prev() { this.goTo(this.current - 1); }
 }
 
+/**
+ * Handlers utilitários (não usados atualmente pois a delegação está no DOMContentLoaded)
+ */
 function handleCardKeyDown(e, carouselId) {
+  /** @type {KeyboardEvent} */
   if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); window.movieCarousel.selectMovie(e.currentTarget); }
   if (e.key === 'ArrowLeft') { e.preventDefault(); window.movieCarousel.navigate(carouselId, -1); }
   if (e.key === 'ArrowRight') { e.preventDefault(); window.movieCarousel.navigate(carouselId, 1); }
 }
 function handleCardClick(e, el) {
+  /** @type {MouseEvent} */
   if (e) {
     e.preventDefault();
   }
   window.movieCarousel.selectMovie(el);
 }
 
+// ==========================
+// Bootstrap da página: carrega dados (TMDB ou fallback),
+// instancia componentes, liga eventos e configura modal de API.
+// ==========================
 window.addEventListener('DOMContentLoaded', async () => {
   console.log('Iniciando carregamento...');
   const usingTMDB = await populateFromTMDB();
@@ -536,17 +741,18 @@ window.addEventListener('DOMContentLoaded', async () => {
   let resizeTimeout;
   window.addEventListener('resize', () => {
     clearTimeout(resizeTimeout);
-    resizeTimeout = setTimeout(() => { window.movieCarousel.recalculate(); }, 250);
+    resizeTimeout = setTimeout(() => { window.movieCarousel.recalculate(); }, UI_CONST.RESIZE_DEBOUNCE_MS);
   });
   document.addEventListener('visibilitychange', () => {
     const carousels = document.querySelectorAll('.carousel');
     carousels.forEach(carousel => { carousel.style.transitionDuration = document.hidden ? '0s' : ''; });
   });
   console.log('Iniciando HeroSlider...');
-  window.heroSlider = new HeroSlider('#hero-slider', { interval: 5000 });
+  window.heroSlider = new HeroSlider('#hero-slider', { interval: UI_CONST.AUTOPLAY_INTERVAL_MS });
   console.log('HeroSlider inicializado');
 
   // ===== UI: Modal de Configuração TMDB =====
+  // Modal simples para salvar/limpar a API key no localStorage.
   const modal = document.getElementById('tmdb-settings-modal');
   const btnOpen = document.getElementById('btn-open-settings');
   const input = document.getElementById('tmdb-key-input');
@@ -587,6 +793,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   });
 
   // Delegação de eventos para navegação dos carrosséis
+  // Delegação no `body` garante funcionamento com elementos gerados dinamicamente
   document.body.addEventListener('click', (e) => {
     const btn = e.target.closest('[data-action][data-target]');
     if (btn) {
